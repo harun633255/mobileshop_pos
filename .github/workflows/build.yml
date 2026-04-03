@@ -3,7 +3,7 @@ name: Build All Platforms
 on:
   push:
     branches: [main, master]
-  workflow_dispatch:  # allows manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────────
@@ -22,7 +22,6 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
           channel: stable
           cache: false
 
@@ -59,7 +58,6 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
           channel: stable
           cache: false
 
@@ -94,7 +92,6 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
           channel: stable
           cache: false
 
