@@ -24,7 +24,7 @@ jobs:
         with:
           flutter-version: '3.29.3'
           channel: stable
-          cache: true
+          cache: false
 
       - name: Patch blue_thermal_printer namespace
         run: |
@@ -61,7 +61,7 @@ jobs:
         with:
           flutter-version: '3.29.3'
           channel: stable
-          cache: true
+          cache: false
 
       - name: Patch blue_thermal_printer macOS Swift stub
         run: |
@@ -96,7 +96,7 @@ jobs:
         with:
           flutter-version: '3.29.3'
           channel: stable
-          cache: true
+          cache: false
 
       - run: flutter pub get
 
