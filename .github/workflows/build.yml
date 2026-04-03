@@ -1,0 +1,114 @@
+name: Build All Platforms
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:  # allows manual trigger from GitHub UI
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Android APK
+  # ─────────────────────────────────────────────
+  build-android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.4'
+          channel: stable
+          cache: true
+
+      - name: Patch blue_thermal_printer namespace
+        run: |
+          FILE="$HOME/.pub-cache/hosted/pub.dev/blue_thermal_printer-1.2.3/android/build.gradle"
+          if ! grep -q "namespace" "$FILE"; then
+            sed -i "/^android {/a\\    namespace 'id.kakzaki.blue_thermal_printer'" "$FILE"
+          fi
+
+      - name: Patch printing compileSdkVersion
+        run: |
+          FILE="$HOME/.pub-cache/hosted/pub.dev/printing-5.13.1/android/build.gradle"
+          sed -i 's/compileSdkVersion 30/compileSdkVersion 35/' "$FILE" || true
+
+      - run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  # ─────────────────────────────────────────────
+  # macOS App
+  # ─────────────────────────────────────────────
+  build-macos:
+    name: macOS App
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.4'
+          channel: stable
+          cache: true
+
+      - name: Patch blue_thermal_printer macOS Swift stub
+        run: |
+          FILE="$HOME/.pub-cache/hosted/pub.dev/blue_thermal_printer-1.2.3/macos/Classes/SwiftBlueThermalPrinterPlugin.swift"
+          sed -i '' 's/class AssetsAudioPlayer/class SwiftBlueThermalPrinterPlugin/' "$FILE" || true
+
+      - run: flutter pub get
+
+      - name: Build macOS
+        run: flutter build macos --release
+
+      - name: Zip macOS app
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r MobilePartsManager-macOS.zip mobileshop_pos.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: build/macos/Build/Products/Release/MobilePartsManager-macOS.zip
+
+  # ─────────────────────────────────────────────
+  # Windows EXE
+  # ─────────────────────────────────────────────
+  build-windows:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.4'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Zip Windows build
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* `
+            -DestinationPath MobilePartsManager-Windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: MobilePartsManager-Windows.zip
